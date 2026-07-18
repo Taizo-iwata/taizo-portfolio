@@ -604,6 +604,52 @@ body.entered .hero-copy{ opacity:1; transform:none; }
 .work-credits dd{ color:var(--ink); }
 
 /* ============================================================
+   WORKS：クリックtoロード動画(YouTube埋め込み)
+   ------------------------------------------------------------
+   youtubeId が設定された作品だけ、サムネ+再生ボタンで表示し、
+   クリックした瞬間に初めて iframe を生成する（デフォルトでは
+   一切 YouTube に接続しない）。
+============================================================ */
+.video-embed:hover .media-fill,
+.video-embed:focus-within .media-fill{
+  filter:brightness(.85);
+}
+.video-embed .media-fill{
+  transition:filter .4s var(--ease);
+}
+iframe.media-fill{ border:0; }
+
+.work-play-btn{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  width:72px; height:72px;
+  border-radius:50%;
+  border:1px solid var(--hairline);
+  background:rgba(11,11,12,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:border-color .4s var(--ease), background .4s var(--ease);
+}
+.work-play-btn:hover, .work-play-btn:focus-visible{
+  border-color:var(--accent);
+}
+.work-play-icon{
+  width:0; height:0;
+  margin-left:4px; /* 三角形の視覚的重心を中央に寄せる */
+  border-top:11px solid transparent;
+  border-bottom:11px solid transparent;
+  border-left:18px solid #fff;
+  transition:border-left-color .4s var(--ease);
+}
+.work-play-btn:hover .work-play-icon,
+.work-play-btn:focus-visible .work-play-icon{
+  border-left-color:var(--accent);
+}
+
+/* ============================================================
    CONTACT / FOOTER
 ============================================================ */
 .contact{
@@ -1012,6 +1058,16 @@ soundToggle.addEventListener('click', () => setSound(!soundOn));
    作品を増やしたいときは、この works[] 配列に要素を追加するだけでよい。
    media は "photoX.jpg" のような画像でも "movieX.mp4" のような
    動画でもよく、拡張子から自動判定して <img>/<video> を出し分ける。
+
+   ▼ YouTube IDの差し替え方（発注者向け）
+   youtubeId に対象動画のYouTube動画ID（URLの v= の後ろの文字列。
+   例: https://youtu.be/XXXXXXXXXXX なら "XXXXXXXXXXX"）を貼るだけで、
+   そのカードは「サムネ+再生ボタン → クリックで再生」になります
+   （youtube-nocookie.com 経由で埋め込むので限定公開のままで構いません）。
+   youtubeId が仮値 "REPLACE_ID" のままのカードは、クリックしても
+   再生されず、ブラウザのコンソールに警告が出るだけです（壊れた
+   埋め込みにはなりません）。youtubeId を null にすると、従来どおりの
+   静止画（またはmedia指定の動画）表示に戻ります。
 ============================================================ */
 const works = [
   {
@@ -1024,7 +1080,8 @@ const works = [
       '制作ポイント': '光と色のコントラストで"懐かしさ"を表現し、シネマライクな世界観に。'
     },
     media: 'photo6.jpg',
-    award: '2位入賞'
+    award: '2位入賞',
+    youtubeId: 'REPLACE_ID'
   },
   {
     title: '企業PRムービー',
@@ -1035,7 +1092,8 @@ const works = [
       '使用機材': 'Sony a7 IV / DaVinci Resolve',
       '制作ポイント': '実際の業務風景を中心に、自然光とテンポの良いカットで企業の魅力を表現。'
     },
-    media: 'photo7.jpg'
+    media: 'photo7.jpg',
+    youtubeId: 'REPLACE_ID'
   },
   {
     title: 'ウェディングムービー(オープニング)',
@@ -1046,7 +1104,8 @@ const works = [
       '使用機材': 'Sony a7 IV / DaVinci Resolve',
       '制作ポイント': '曲のテンポに合わせて爽快感を演出し、2人の登場を彩る映像に。'
     },
-    media: 'photo8.jpg'
+    media: 'photo8.jpg',
+    youtubeId: 'REPLACE_ID'
   },
   {
     title: 'ウェディングムービー(ゴルフ場)',
@@ -1057,11 +1116,49 @@ const works = [
       '使用機材': 'Sony a7 IV / DaVinci Resolve / DJI AIR 2S',
       '制作ポイント': 'ゴルフ好きのお二人のためゴルフ場で撮影。広大なロケーションを活かしドローン撮影も実施。'
     },
-    media: 'photo9.jpg'
+    media: 'photo9.jpg',
+    youtubeId: 'REPLACE_ID'
   }
 ];
 
 const worksList = document.getElementById('worksList');
+let activeVideoFrame = null;
+
+function renderWorkThumb(frame){
+  const title = frame.dataset.title;
+  frame.innerHTML = `
+    <img class="media-fill" src="${frame.dataset.thumb}" alt="${title}">
+    <button class="work-play-btn" type="button" aria-label="再生: ${title}">
+      <span class="work-play-icon" aria-hidden="true"></span>
+    </button>
+  `;
+  frame.querySelector('.work-play-btn').addEventListener('click', () => playWorkVideo(frame));
+}
+
+function renderWorkVideo(frame){
+  const id = frame.dataset.youtubeId;
+  const title = frame.dataset.title;
+  frame.innerHTML = `
+    <iframe class="media-fill"
+      src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0"
+      title="${title}"
+      allow="autoplay; fullscreen"
+      allowfullscreen></iframe>
+  `;
+}
+
+function playWorkVideo(frame){
+  const id = frame.dataset.youtubeId;
+  if (!id || id === 'REPLACE_ID'){
+    console.warn(`[works] youtubeId が未設定です:「${frame.dataset.title}」。works[] 配列の youtubeId を実際の動画IDに差し替えてください。`);
+    return;
+  }
+  if (activeVideoFrame && activeVideoFrame !== frame){
+    renderWorkThumb(activeVideoFrame); // 別の作品を再生する前に、前の作品をサムネに戻す
+  }
+  renderWorkVideo(frame);
+  activeVideoFrame = frame;
+}
 
 works.forEach((work) => {
   const item = document.createElement('div');
@@ -1089,14 +1186,25 @@ works.forEach((work) => {
 
   const media = document.createElement('div');
   media.className = 'chapter-media reveal';
-  const isVideo = /\.mp4$/i.test(work.media);
-  media.innerHTML = `
-    <div class="media-frame">
-      ${isVideo
-        ? `<video class="media-fill" src="${work.media}" autoplay loop muted playsinline></video>`
-        : `<img class="media-fill" src="${work.media}" alt="${work.title}">`}
-    </div>
-  `;
+
+  if (work.youtubeId){
+    const frame = document.createElement('div');
+    frame.className = 'media-frame video-embed';
+    frame.dataset.thumb = work.media;
+    frame.dataset.title = work.title;
+    frame.dataset.youtubeId = work.youtubeId;
+    media.appendChild(frame);
+    renderWorkThumb(frame);
+  } else {
+    const isVideo = /\.mp4$/i.test(work.media);
+    media.innerHTML = `
+      <div class="media-frame">
+        ${isVideo
+          ? `<video class="media-fill" src="${work.media}" autoplay loop muted playsinline></video>`
+          : `<img class="media-fill" src="${work.media}" alt="${work.title}">`}
+      </div>
+    `;
+  }
 
   item.appendChild(text);
   item.appendChild(media);
