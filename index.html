@@ -806,11 +806,12 @@ footer{
   ============================================================ -->
   <section class="hero" id="hero">
     <div class="media-frame">
-      <!-- REPLACE: 背景を動画にする場合は下の <img> を削除し、
-           次の <video> のコメントを外してください。
-      <video class="media-fill" src="movie1.mp4" autoplay loop muted playsinline></video>
-      -->
-      <img class="media-fill" src="photo1.jpg" alt="マジックアワーの風景">
+      <!-- hero.mp4 があれば自動再生。無い場合／エラー時は photo1.jpg の
+           静止画にフォールバックする（script内「ヒーローのループ動画
+           対応」を参照）。モバイル幅と prefers-reduced-motion では
+           そもそも動画を読み込まない。 -->
+      <video class="media-fill" id="heroVideo" autoplay muted loop playsinline poster="photo1.jpg"></video>
+      <img class="media-fill" id="heroFallback" src="photo1.jpg" alt="マジックアワーの風景" style="display:none">
       <div class="hero-shade"></div>
     </div>
 
@@ -1053,7 +1054,35 @@ document.getElementById('enterMute') .addEventListener('click', () => enterSite(
 soundToggle.addEventListener('click', () => setSound(!soundOn));
 
 /* ============================================================
-   2. WORKS セクション：データと DOM 生成
+   2. ヒーローのループ動画対応
+   ------------------------------------------------------------
+   hero.mp4 があれば自動再生し、無い場合（またはエラー時）は
+   photo1.jpg の静止画のままにする。事前の fetch 判定はせず、
+   <video> の error イベントで静止画へフォールバックする方式。
+   モバイル幅（820px以下）と prefers-reduced-motion では、
+   回線・バッテリー・アクセシビリティへの配慮からそもそも
+   動画を読み込まない（CLAUDE.md メディアルール準拠）。
+============================================================ */
+const heroVideo    = document.getElementById('heroVideo');
+const heroFallback = document.getElementById('heroFallback');
+
+function showHeroFallback(){
+  heroVideo.remove();
+  heroFallback.style.display = '';
+}
+
+const heroPrefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const heroIsMobile = window.matchMedia('(max-width: 820px)').matches;
+
+if (heroPrefersReducedMotion || heroIsMobile){
+  showHeroFallback();
+} else {
+  heroVideo.addEventListener('error', showHeroFallback);
+  heroVideo.src = 'hero.mp4';
+}
+
+/* ============================================================
+   3. WORKS セクション：データと DOM 生成
    ------------------------------------------------------------
    作品を増やしたいときは、この works[] 配列に要素を追加するだけでよい。
    media は "photoX.jpg" のような画像でも "movieX.mp4" のような
@@ -1212,7 +1241,7 @@ works.forEach((work) => {
 });
 
 /* ============================================================
-   3. スクロール連動フェードイン（IntersectionObserver）
+   4. スクロール連動フェードイン（IntersectionObserver）
 ============================================================ */
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => {
@@ -1226,7 +1255,7 @@ const io = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 /* ============================================================
-   4. RECタイムコード（署名演出）
+   5. RECタイムコード（署名演出）
    ------------------------------------------------------------
    ページ全体を長さ2分・24fpsの1本のフッテージに見立て、
    スクロール進捗に応じてタイムコードを進める。
@@ -1257,7 +1286,7 @@ window.addEventListener('scroll', () => {
 updateTimecode();
 
 /* ============================================================
-   5. MENU（縦タイムラインナビ：全画面オーバーレイの開閉）
+   6. MENU（縦タイムラインナビ：全画面オーバーレイの開閉）
    ------------------------------------------------------------
    #gate と同じトーンで開閉する。ESCキー／×ボタン／各リンククリックの
    いずれでも閉じられ、開いている間は背景スクロールをロックする。
