@@ -17,12 +17,16 @@
       photo3.jpg  … VIDEO & EDIT セクション
       photo4.jpg  … DRONE セクション
       photo5.jpg  … AI & WEB セクション
+      photo6〜9.jpg … WORKS セクション（作品1〜4、works[] 配列で管理）
       bgm.mp3     … BGM（任意。無くても動作します）
       movie1.mp4  … 後から差し替える動画（任意）
 
   ・画像 → 動画への差し替え方法は、各 .media-frame 内の
     「REPLACE:」コメントを参照してください。
     <img> を <video> に置き換えるだけでレイアウトは崩れません。
+    WORKS セクションのみ、works[] 配列の media を "〜.mp4" に
+    変更するだけで自動的に <video> タグが生成されます
+    （JS内「WORKS セクション：データと DOM 生成」を参照）。
   ============================================================
 -->
 
@@ -416,13 +420,74 @@ body.entered .hero-copy{ opacity:1; transform:none; }
   gap:clamp(2.5rem, 6vw, 6rem);
   align-items:center;
 }
-/* 偶数チャプターは左右反転して単調さを避ける */
-.chapter:nth-of-type(even) .chapter-inner .chapter-media{ order:-1; }
+/* 左右反転して単調さを避ける（セクション数が変わっても崩れないよう
+   nth-of-type ではなく明示クラスで指定する） */
+.chapter.chapter-alt .chapter-inner .chapter-media{ order:-1; }
 
 @media (max-width: 820px){
   .chapter-inner{ grid-template-columns:1fr; }
-  .chapter:nth-of-type(even) .chapter-inner .chapter-media{ order:0; }
+  .chapter.chapter-alt .chapter-inner .chapter-media{ order:0; }
 }
+
+/* ============================================================
+   WORKS（作品一覧：works[] 配列から DOM 生成される）
+   ------------------------------------------------------------
+   既存チャプターと同じ .chapter-inner / .chapter-media を
+   作品ごとに繰り返し、6枠グリッドではなく縦積みで見せる。
+============================================================ */
+.works .works-intro{ margin-bottom:clamp(3rem, 8vw, 5rem); }
+
+.work-item{
+  padding-top:clamp(4.5rem, 9vw, 7rem);
+  border-top:1px solid var(--hairline);
+}
+.work-item:first-child{ padding-top:0; border-top:none; }
+/* 作品も交互に左右反転 */
+.work-item:nth-child(even) .chapter-media{ order:-1; }
+@media (max-width: 820px){
+  .work-item:nth-child(even) .chapter-media{ order:0; }
+}
+
+.work-badge{
+  display:inline-flex;
+  align-items:center;
+  font-family:var(--font-mono);
+  font-size:.66rem;
+  letter-spacing:.16em;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  padding:.35em 1em;
+  border-radius:999px;
+  margin-bottom:1.2rem;
+}
+.work-title{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:clamp(1.5rem, 3.6vw, 2.2rem);
+  letter-spacing:.03em;
+  line-height:1.35;
+}
+.work-category{
+  font-family:var(--font-mono);
+  font-size:.68rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:.7rem;
+}
+.work-credits{
+  margin-top:2rem;
+  display:grid;
+  grid-template-columns:6.5em 1fr;
+  row-gap:.7rem;
+  column-gap:1.2rem;
+  font-family:var(--font-mono);
+  font-size:.78rem;
+  letter-spacing:.03em;
+  line-height:1.7;
+}
+.work-credits dt{ color:var(--muted); }
+.work-credits dd{ color:var(--ink); }
 
 /* ============================================================
    CONTACT / FOOTER
@@ -594,7 +659,7 @@ footer{
   <!-- ============================================================
        CHAPTER 02 — VIDEO & EDIT
   ============================================================ -->
-  <section class="chapter" id="video">
+  <section class="chapter chapter-alt" id="video">
     <div class="chapter-inner">
       <div class="chapter-text reveal" data-stagger>
         <p class="eyebrow">TC 00:02:00 — CHAPTER 02</p>
@@ -625,12 +690,28 @@ footer{
   </section>
 
   <!-- ============================================================
-       CHAPTER 03 — DRONE
+       WORKS（TC 00:02:30）
+       ------------------------------------------------------------
+       作品カードは JS の works[] 配列から自動生成される。
+       #worksList の中身はスクリプト内「WORKS セクション：
+       データと DOM 生成」を参照。
+  ============================================================ -->
+  <section class="chapter works" id="works">
+    <div class="works-intro reveal" data-stagger>
+      <p class="eyebrow">TC 00:02:30 — WORKS</p>
+      <h2 class="section-title-en">Works</h2>
+      <p class="section-title-ja">代表作を、時系列で。</p>
+    </div>
+    <div class="works-list" id="worksList"></div>
+  </section>
+
+  <!-- ============================================================
+       CHAPTER 04 — DRONE
   ============================================================ -->
   <section class="chapter" id="drone">
     <div class="chapter-inner">
       <div class="chapter-text reveal" data-stagger>
-        <p class="eyebrow">TC 00:03:00 — CHAPTER 03</p>
+        <p class="eyebrow">TC 00:03:00 — CHAPTER 04</p>
         <h2 class="section-title-en">Drone</h2>
         <p class="section-title-ja">飛ばす技術より、飛ばせる体制を。</p>
         <p class="section-lead">
@@ -658,12 +739,12 @@ footer{
   </section>
 
   <!-- ============================================================
-       CHAPTER 04 — AI & WEB
+       CHAPTER 05 — AI & WEB
   ============================================================ -->
-  <section class="chapter" id="ai">
+  <section class="chapter chapter-alt" id="ai">
     <div class="chapter-inner">
       <div class="chapter-text reveal" data-stagger>
-        <p class="eyebrow">TC 00:04:00 — CHAPTER 04</p>
+        <p class="eyebrow">TC 00:04:00 — CHAPTER 05</p>
         <h2 class="section-title-en">AI &amp; Web</h2>
         <p class="section-title-ja">現場の困りごとを、道具に変える。</p>
         <p class="section-lead">
@@ -762,7 +843,104 @@ document.getElementById('enterMute') .addEventListener('click', () => enterSite(
 soundToggle.addEventListener('click', () => setSound(!soundOn));
 
 /* ============================================================
-   2. スクロール連動フェードイン（IntersectionObserver）
+   2. WORKS セクション：データと DOM 生成
+   ------------------------------------------------------------
+   作品を増やしたいときは、この works[] 配列に要素を追加するだけでよい。
+   media は "photoX.jpg" のような画像でも "movieX.mp4" のような
+   動画でもよく、拡張子から自動判定して <img>/<video> を出し分ける。
+============================================================ */
+const works = [
+  {
+    title: 'コンテスト作品「なつかしい街」',
+    category: 'コンテスト作品',
+    description: '"記憶と風景"をテーマに制作した短編映像。映像コンテストで2位入賞。',
+    credits: {
+      '担当範囲': '企画 / 撮影 / 編集 / カラーグレーディング',
+      '使用機材': 'Sony a7 IV / DaVinci Resolve / DJI RS3 mini',
+      '制作ポイント': '光と色のコントラストで"懐かしさ"を表現し、シネマライクな世界観に。'
+    },
+    media: 'photo6.jpg',
+    award: '2位入賞'
+  },
+  {
+    title: '企業PRムービー',
+    category: '企業PR',
+    description: '企業の信頼感と働く人の温かさを伝えるPR映像を制作。',
+    credits: {
+      '担当範囲': '撮影 / 編集 / カラーグレーディング',
+      '使用機材': 'Sony a7 IV / DaVinci Resolve',
+      '制作ポイント': '実際の業務風景を中心に、自然光とテンポの良いカットで企業の魅力を表現。'
+    },
+    media: 'photo7.jpg'
+  },
+  {
+    title: 'ウェディングムービー(オープニング)',
+    category: 'ウェディング',
+    description: '式のはじまりを彩るオープニング映像。二人の思い出と日常をテーマに構成。',
+    credits: {
+      '担当範囲': '撮影 / 編集 / カラーグレーディング',
+      '使用機材': 'Sony a7 IV / DaVinci Resolve',
+      '制作ポイント': '曲のテンポに合わせて爽快感を演出し、2人の登場を彩る映像に。'
+    },
+    media: 'photo8.jpg'
+  },
+  {
+    title: 'ウェディングムービー(ゴルフ場)',
+    category: 'ウェディング',
+    description: '結婚をイメージさせる華やかな印象の映像構成。',
+    credits: {
+      '担当範囲': '撮影 / 編集 / カラーグレーディング',
+      '使用機材': 'Sony a7 IV / DaVinci Resolve / DJI AIR 2S',
+      '制作ポイント': 'ゴルフ好きのお二人のためゴルフ場で撮影。広大なロケーションを活かしドローン撮影も実施。'
+    },
+    media: 'photo9.jpg'
+  }
+];
+
+const worksList = document.getElementById('worksList');
+
+works.forEach((work) => {
+  const item = document.createElement('div');
+  item.className = 'chapter-inner work-item';
+
+  const text = document.createElement('div');
+  text.className = 'chapter-text reveal';
+  text.setAttribute('data-stagger', '');
+
+  const badgeHtml = work.award
+    ? `<span class="work-badge">AWARD — ${work.award}</span>`
+    : '';
+
+  const creditRows = Object.entries(work.credits)
+    .map(([label, value]) => `<dt>${label}</dt><dd>${value}</dd>`)
+    .join('');
+
+  text.innerHTML = `
+    ${badgeHtml}
+    <h3 class="work-title">${work.title}</h3>
+    <p class="work-category">${work.category}</p>
+    <p class="section-lead">${work.description}</p>
+    <dl class="work-credits">${creditRows}</dl>
+  `;
+
+  const media = document.createElement('div');
+  media.className = 'chapter-media reveal';
+  const isVideo = /\.mp4$/i.test(work.media);
+  media.innerHTML = `
+    <div class="media-frame">
+      ${isVideo
+        ? `<video class="media-fill" src="${work.media}" autoplay loop muted playsinline></video>`
+        : `<img class="media-fill" src="${work.media}" alt="${work.title}">`}
+    </div>
+  `;
+
+  item.appendChild(text);
+  item.appendChild(media);
+  worksList.appendChild(item);
+});
+
+/* ============================================================
+   3. スクロール連動フェードイン（IntersectionObserver）
 ============================================================ */
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => {
@@ -776,7 +954,7 @@ const io = new IntersectionObserver((entries) => {
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 /* ============================================================
-   3. RECタイムコード（署名演出）
+   4. RECタイムコード（署名演出）
    ------------------------------------------------------------
    ページ全体を長さ2分・24fpsの1本のフッテージに見立て、
    スクロール進捗に応じてタイムコードを進める。
