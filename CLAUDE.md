@@ -34,7 +34,15 @@
 
 ## 運用
 - 区切りごとに git commit(1機能=1コミット)
-- 公開手順: (デプロイ確立後にここへ記載)
+- 公開手順:
+  1. `git push origin main` する
+  2. GitHub Pages は main ブランチ / root 直下を自動ビルドする設定済み。
+     push 後、数十秒〜数分でビルドされる
+     (ビルド状況は `gh api repos/Taizo-iwata/taizo-portfolio/pages/builds/latest` で確認可能)
+  3. 公開URL https://taizo-iwata.github.io/taizo-portfolio/ にアクセスし、
+     反映されていることを確認する(ブラウザキャッシュに注意、
+     反映されない場合はスーパーリロードする)
+- リポジトリ: https://github.com/Taizo-iwata/taizo-portfolio (public)
 - 触ってはいけないもの: image/ 内原本、.git
 
 ## 公開後リスト(今はやらないこと)
