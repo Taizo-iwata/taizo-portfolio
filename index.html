@@ -259,6 +259,11 @@ ul{ list-style:none; }
   pointer-events:none;
 }
 .hud .brand{ pointer-events:auto; }
+.hud-right{
+  display:flex;
+  align-items:center;
+  gap:clamp(1.2rem, 3vw, 2rem);
+}
 .hud .tc{
   display:flex;
   align-items:center;
@@ -271,6 +276,115 @@ ul{ list-style:none; }
   animation:blink 1.6s steps(1) infinite;
 }
 @keyframes blink{ 50%{ opacity:.15; } }
+
+/* --- MENU ボタン（HUD内・右上固定） --- */
+.menu-toggle{
+  pointer-events:auto;
+  font-family:var(--font-mono);
+  font-size:.68rem;
+  letter-spacing:.22em;
+  color:inherit;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:.2em 0;
+}
+.menu-toggle:hover, .menu-toggle:focus-visible{ color:var(--accent); }
+
+/* ============================================================
+   MENU オーバーレイ（縦タイムラインナビ）
+   ------------------------------------------------------------
+   #gate と同じトーン・イージングで開閉する全画面メニュー。
+============================================================ */
+.menu-overlay{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  background:rgba(11,11,12,.97);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:clamp(2rem, 8vw, 6rem);
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 1s var(--ease), visibility 1s;
+}
+.menu-overlay.open{ opacity:1; visibility:visible; }
+
+.menu-close{
+  position:absolute;
+  top:1.2rem;
+  right:1.6rem;
+  font-family:var(--font-mono);
+  font-size:1.5rem;
+  line-height:1;
+  color:var(--ink);
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:.5em;
+  transition:color .4s;
+}
+.menu-close:hover, .menu-close:focus-visible{ color:var(--accent); }
+
+.menu-timeline{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(1.3rem, 3.2vw, 2.1rem);
+  padding-left:2.4rem;
+}
+.menu-timeline::before{
+  content:"";
+  position:absolute;
+  left:.3rem;
+  top:.4em;
+  bottom:.4em;
+  width:1px;
+  background:var(--hairline);
+}
+.menu-item{
+  position:relative;
+  display:flex;
+  align-items:baseline;
+  gap:1.4rem;
+  color:var(--muted);
+  transition:color .4s;
+}
+.menu-item:hover, .menu-item:focus-visible{ color:var(--ink); }
+.menu-dot{
+  position:absolute;
+  left:-2.4rem;
+  top:50%;
+  transform:translateY(-50%);
+  width:9px; height:9px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1px solid var(--hairline);
+  transition:background .4s, border-color .4s;
+}
+.menu-item:hover .menu-dot, .menu-item:focus-visible .menu-dot{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.menu-tc{
+  font-family:var(--font-mono);
+  font-size:.7rem;
+  letter-spacing:.12em;
+  color:var(--accent);
+  width:7.2em;
+  flex:none;
+}
+.menu-name{
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size:clamp(1.15rem, 2.8vw, 1.7rem);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+/* メニュー展開中は背景スクロールをロック */
+body.menu-open{ overflow:hidden; }
 
 /* --- サウンドトグル（画面左下固定） --- */
 .sound-toggle{
@@ -580,8 +694,57 @@ footer{
 ============================================================ -->
 <header class="hud">
   <span class="brand">TAIZO IWATA — PORTFOLIO</span>
-  <span class="tc"><span class="rec-dot" aria-hidden="true"></span>REC&nbsp;<span id="timecode">00:00:00:00</span></span>
+  <div class="hud-right">
+    <span class="tc"><span class="rec-dot" aria-hidden="true"></span>REC&nbsp;<span id="timecode">00:00:00:00</span></span>
+    <button class="menu-toggle" id="menuToggle" aria-haspopup="true" aria-expanded="false" aria-controls="menuOverlay" aria-label="メニューを開く">
+      <span id="menuToggleLabel">MENU</span>
+    </button>
+  </div>
 </header>
+
+<!-- ============================================================
+     MENU：縦タイムラインナビ（全画面オーバーレイ）
+============================================================ -->
+<div id="menuOverlay" class="menu-overlay" role="dialog" aria-modal="true" aria-label="サイトメニュー" aria-hidden="true">
+  <button class="menu-close" id="menuClose" aria-label="メニューを閉じる">&times;</button>
+  <nav class="menu-timeline" aria-label="チャプターへ移動">
+    <a href="#hero" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:00:00</span>
+      <span class="menu-name">Home</span>
+    </a>
+    <a href="#photo" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:01:00</span>
+      <span class="menu-name">Photo</span>
+    </a>
+    <a href="#video" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:02:00</span>
+      <span class="menu-name">Video &amp; Edit</span>
+    </a>
+    <a href="#works" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:02:30</span>
+      <span class="menu-name">Works</span>
+    </a>
+    <a href="#drone" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:03:00</span>
+      <span class="menu-name">Drone</span>
+    </a>
+    <a href="#ai" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:04:00</span>
+      <span class="menu-name">AI &amp; Web</span>
+    </a>
+    <a href="#contact" class="menu-item" data-menu-link>
+      <span class="menu-dot" aria-hidden="true"></span>
+      <span class="menu-tc">TC 00:05:00</span>
+      <span class="menu-name">Contact</span>
+    </a>
+  </nav>
+</div>
 
 <!-- サウンド ON/OFF（左下固定） -->
 <button class="sound-toggle" id="soundToggle" aria-pressed="false" aria-label="サウンドの切り替え">
@@ -983,6 +1146,44 @@ window.addEventListener('scroll', () => {
   }
 }, { passive: true });
 updateTimecode();
+
+/* ============================================================
+   5. MENU（縦タイムラインナビ：全画面オーバーレイの開閉）
+   ------------------------------------------------------------
+   #gate と同じトーンで開閉する。ESCキー／×ボタン／各リンククリックの
+   いずれでも閉じられ、開いている間は背景スクロールをロックする。
+============================================================ */
+const menuToggle      = document.getElementById('menuToggle');
+const menuToggleLabel = document.getElementById('menuToggleLabel');
+const menuOverlay     = document.getElementById('menuOverlay');
+const menuClose       = document.getElementById('menuClose');
+
+function openMenu(){
+  menuOverlay.classList.add('open');
+  menuOverlay.setAttribute('aria-hidden', 'false');
+  menuToggle.setAttribute('aria-expanded', 'true');
+  menuToggleLabel.textContent = 'CLOSE';
+  document.body.classList.add('menu-open');
+}
+
+function closeMenu(){
+  menuOverlay.classList.remove('open');
+  menuOverlay.setAttribute('aria-hidden', 'true');
+  menuToggle.setAttribute('aria-expanded', 'false');
+  menuToggleLabel.textContent = 'MENU';
+  document.body.classList.remove('menu-open');
+}
+
+menuToggle.addEventListener('click', () => {
+  menuOverlay.classList.contains('open') ? closeMenu() : openMenu();
+});
+menuClose.addEventListener('click', closeMenu);
+menuOverlay.querySelectorAll('[data-menu-link]').forEach(link => {
+  link.addEventListener('click', closeMenu);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && menuOverlay.classList.contains('open')) closeMenu();
+});
 </script>
 </body>
 </html>
